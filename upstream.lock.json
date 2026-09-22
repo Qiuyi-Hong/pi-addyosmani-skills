@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "repository": "https://github.com/addyosmani/agent-skills.git",
+  "ref": "main",
+  "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
+  "version": "0.6.10",
+  "snapshotSha256": "35ee32676ed9f8737d70d4a556a5d7de4026eff943e20e2a83d3260ce14e60db",
+  "commands": [
+    "build",
+    "code-simplify",
+    "constraints",
+    "plan",
+    "review",
+    "ship",
+    "spec",
+    "test",
+    "webperf"
+  ],
+  "hooks": [
+    "sdd-cache-post.sh",
+    "sdd-cache-pre.sh",
+    "session-start.sh",
+    "simplify-ignore.sh"
+  ]
+}

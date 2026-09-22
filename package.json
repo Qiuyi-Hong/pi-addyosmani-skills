@@ -1,0 +1,60 @@
+{
+  "name": "pi-addyosmani-skills",
+  "version": "0.1.0",
+  "description": "Pi adapter for Addy Osmani's agent-skills",
+  "type": "module",
+  "license": "MIT",
+  "author": "Qiuyi Hong",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Qiuyi-Hong/pi-addyosmani-skills.git"
+  },
+  "keywords": [
+    "pi-package",
+    "pi",
+    "agent-skills"
+  ],
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "files": [
+    "LICENSE",
+    "NOTICE",
+    "README.md",
+    "docs/",
+    "pi-extension/",
+    "scripts/",
+    "skills/",
+    "upstream/agent-skills/",
+    "upstream.lock.json"
+  ],
+  "pi": {
+    "extensions": [
+      "./pi-extension/index.ts"
+    ],
+    "skills": [
+      "./upstream/agent-skills/skills",
+      "./skills"
+    ]
+  },
+  "scripts": {
+    "generate": "node scripts/generate-command-skills.mjs",
+    "generate:check": "node scripts/generate-command-skills.mjs --check",
+    "upstream:check": "node --experimental-strip-types scripts/check-upstream.mjs",
+    "upstream:update": "node --experimental-strip-types scripts/sync-upstream.mjs",
+    "test:node": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.mjs",
+    "test:upstream-hook": "cd upstream/agent-skills && bash hooks/simplify-ignore-test.sh",
+    "test": "npm run test:node && npm run test:upstream-hook",
+    "lint": "for file in scripts/*.mjs tests/*.mjs; do node --check \"$file\"; done",
+    "typecheck": "tsc --noEmit",
+    "check": "npm run lint && npm run typecheck && npm test && npm run generate:check && npm run upstream:check"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "0.87.0",
+    "@types/node": "22.19.19",
+    "typescript": "5.9.3"
+  }
+}
