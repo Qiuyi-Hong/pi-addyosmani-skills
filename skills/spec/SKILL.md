@@ -2,7 +2,7 @@
 name: spec
 description: Start spec-driven development — write a structured specification before writing code
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/spec.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/spec.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).
 

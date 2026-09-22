@@ -5,7 +5,7 @@ This repository is a Pi adapter around a pinned, vendored snapshot of Addy Osman
 ## Read-only boundaries
 
 - Treat `upstream/agent-skills/` as read-only. **Never edit, add, delete, format, or generate files directly in this directory.** Update the snapshot only through `npm run upstream:update` (optionally with `-- --ref <tag-or-commit>`).
-- Treat `skills/` as generated output. Change `scripts/generate-command-skills.mjs` or update the upstream snapshot, then run `npm run generate`; do not hand-edit generated skill files.
+- Treat `skills/` as generated output. Change `scripts/generate-command-skills.ts` or update the upstream snapshot, then run `npm run generate`; do not hand-edit generated skill files.
 
 ## Where changes belong
 

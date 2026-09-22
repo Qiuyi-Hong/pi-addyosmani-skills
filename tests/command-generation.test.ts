@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { checkGeneratedSkills, renderCommandSkill } from "../scripts/generate-command-skills.mjs";
+import { checkGeneratedSkills, renderCommandSkill } from "../scripts/generate-command-skills.ts";
 
 test("command generation adds Pi frontmatter without duplicating workflow content", () => {
   const source = `---\ndescription: Example command\n---\n\nInvoke agent-skills:test-driven-development.\n\n$ARGUMENTS\n`;

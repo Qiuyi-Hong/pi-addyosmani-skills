@@ -2,7 +2,7 @@
 name: build
 description: Implement tasks incrementally — build, test, verify, commit. Add "auto" to run the whole plan in one approved pass.
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/build.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/build.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). `$ARGUMENTS` refers to arguments appended by Pi in the final `User:` line.
 

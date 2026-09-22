@@ -2,7 +2,7 @@
 name: test
 description: Run TDD workflow — write failing tests, implement, verify. For bugs, use the Prove-It pattern.
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/test.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/test.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).
 

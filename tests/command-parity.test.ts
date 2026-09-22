@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import { basename, join } from "node:path";
 import test from "node:test";
 
-import { listCommandFiles, renderCommandSkill } from "../scripts/generate-command-skills.mjs";
+import { listCommandFiles, renderCommandSkill } from "../scripts/generate-command-skills.ts";
 
 const root = new URL("..", import.meta.url).pathname;
 

@@ -1,17 +1,18 @@
+import type { Dirent } from "node:fs";
 import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const rootFromScript = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-function splitCommand(source) {
+function splitCommand(source: string) {
   const normalized = source.replaceAll("\r\n", "\n");
   const match = normalized.match(/^---\n([\s\S]*?)\n---\n?/);
   if (!match) throw new Error("Command must start with YAML frontmatter");
   return { frontmatter: match[1], body: normalized.slice(match[0].length) };
 }
 
-function compatibilityNote(body) {
+function compatibilityNote(body: string) {
   const notes = ["Upstream `/command` references map to generated `/skill:command` skills."];
   if (body.includes("agent-skills:")) notes.push("`agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).");
   if (body.includes("$ARGUMENTS")) notes.push("`$ARGUMENTS` refers to arguments appended by Pi in the final `User:` line.");
@@ -19,18 +20,18 @@ function compatibilityNote(body) {
   return notes.length ? `\n> **Pi compatibility:** ${notes.join(" ")}\n` : "";
 }
 
-export function renderCommandSkill(name, source, sourcePath) {
+export function renderCommandSkill(name: string, source: string, sourcePath: string) {
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(name)) throw new Error(`Invalid skill name: ${name}`);
   const { frontmatter, body } = splitCommand(source);
   const keptFrontmatter = frontmatter
     .split("\n")
     .filter((line) => !/^name\s*:/.test(line))
     .join("\n");
-  const marker = `<!-- Generated from upstream/agent-skills/${sourcePath} by scripts/generate-command-skills.mjs; do not edit. -->\n`;
+  const marker = `<!-- Generated from upstream/agent-skills/${sourcePath} by scripts/generate-command-skills.ts; do not edit. -->\n`;
   return `---\nname: ${name}\n${keptFrontmatter}\n---\n${marker}${compatibilityNote(body)}${body}`;
 }
 
-export async function listCommandFiles(root = rootFromScript) {
+export async function listCommandFiles(root: string = rootFromScript) {
   const commandDir = join(root, "upstream", "agent-skills", ".claude", "commands");
   return (await readdir(commandDir, { withFileTypes: true }))
     .filter((entry) => entry.isFile() && entry.name.endsWith(".md"))
@@ -38,8 +39,8 @@ export async function listCommandFiles(root = rootFromScript) {
     .sort();
 }
 
-async function expectedSkills(root) {
-  const expected = new Map();
+async function expectedSkills(root: string) {
+  const expected = new Map<string, string>();
   for (const sourceFile of await listCommandFiles(root)) {
     const name = basename(sourceFile, ".md");
     const source = await readFile(sourceFile, "utf8");
@@ -48,15 +49,15 @@ async function expectedSkills(root) {
   return expected;
 }
 
-export async function checkGeneratedSkills(root = rootFromScript) {
+export async function checkGeneratedSkills(root: string = rootFromScript) {
   const expected = await expectedSkills(root);
   const skillsDir = join(root, "skills");
-  const errors = [];
-  let entries = [];
+  const errors: string[] = [];
+  let entries: Dirent[] = [];
   try {
     entries = await readdir(skillsDir, { withFileTypes: true });
   } catch (error) {
-    if (error?.code !== "ENOENT") throw error;
+    if (!isMissing(error)) throw error;
   }
 
   const actualNames = entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name).sort();
@@ -66,14 +67,14 @@ export async function checkGeneratedSkills(root = rootFromScript) {
     try {
       if (await readFile(join(skillsDir, name, "SKILL.md"), "utf8") !== content) errors.push(`stale skills/${name}/SKILL.md`);
     } catch (error) {
-      if (error?.code === "ENOENT") errors.push(`missing skills/${name}/SKILL.md`);
+      if (isMissing(error)) errors.push(`missing skills/${name}/SKILL.md`);
       else throw error;
     }
   }
   return errors;
 }
 
-export async function generateCommandSkills(root = rootFromScript) {
+export async function generateCommandSkills(root: string = rootFromScript) {
   const skillsDir = join(root, "skills");
   const expected = await expectedSkills(root);
   await rm(skillsDir, { recursive: true, force: true });
@@ -83,6 +84,10 @@ export async function generateCommandSkills(root = rootFromScript) {
     await writeFile(output, content, "utf8");
   }
   return [...expected.keys()];
+}
+
+function isMissing(error: unknown): boolean {
+  return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

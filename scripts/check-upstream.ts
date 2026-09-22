@@ -3,16 +3,16 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { HOOK_CLASSIFICATIONS } from "../pi-extension/compatibility.ts";
-import { checkGeneratedSkills } from "./generate-command-skills.mjs";
-import { inspectUpstream, snapshotDigest } from "./upstream-files.mjs";
+import { checkGeneratedSkills } from "./generate-command-skills.ts";
+import { inspectUpstream, snapshotDigest } from "./upstream-files.ts";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const snapshot = join(root, "upstream", "agent-skills");
 const lock = JSON.parse(await readFile(join(root, "upstream.lock.json"), "utf8"));
 const actual = await inspectUpstream(snapshot);
-const errors = [];
+const errors: string[] = [];
 
-const same = (left, right) => JSON.stringify(left) === JSON.stringify(right);
+const same = (left: unknown, right: unknown) => JSON.stringify(left) === JSON.stringify(right);
 if (actual.version !== lock.version) errors.push(`version mismatch: lock=${lock.version} snapshot=${actual.version}`);
 if (await snapshotDigest(snapshot) !== lock.snapshotSha256) errors.push("vendored upstream content differs from upstream.lock.json");
 if (!same(actual.commands, lock.commands)) errors.push("upstream commands differ from upstream.lock.json");

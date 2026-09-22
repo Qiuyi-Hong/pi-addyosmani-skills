@@ -2,7 +2,7 @@
 name: code-simplify
 description: Simplify code for clarity and maintainability — reduce complexity without changing behavior
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/code-simplify.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/code-simplify.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).
 

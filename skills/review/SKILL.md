@@ -2,7 +2,7 @@
 name: review
 description: Conduct a five-axis code review — correctness, readability, architecture, security, performance
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/review.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/review.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).
 

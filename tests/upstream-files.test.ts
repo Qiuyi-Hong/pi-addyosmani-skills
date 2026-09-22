@@ -4,7 +4,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
 
-import { snapshotDigest } from "../scripts/upstream-files.mjs";
+import { snapshotDigest } from "../scripts/upstream-files.ts";
 
 test("snapshot digest includes symbolic-link targets", async () => {
   const root = await mkdtemp(join(tmpdir(), "pi-upstream-digest-"));

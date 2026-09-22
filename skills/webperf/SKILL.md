@@ -2,7 +2,7 @@
 name: webperf
 description: Run a web performance audit via the web-performance-auditor persona
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/webperf.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/webperf.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills.
 

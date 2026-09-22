@@ -1,6 +1,6 @@
 {
   "name": "pi-addyosmani-skills",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Pi adapter for Addy Osmani's agent-skills",
   "type": "module",
   "license": "MIT",
@@ -38,14 +38,14 @@
     ]
   },
   "scripts": {
-    "generate": "node scripts/generate-command-skills.mjs",
-    "generate:check": "node scripts/generate-command-skills.mjs --check",
-    "upstream:check": "node --experimental-strip-types scripts/check-upstream.mjs",
-    "upstream:update": "node --experimental-strip-types scripts/sync-upstream.mjs",
-    "test:node": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.mjs",
+    "generate": "node --experimental-strip-types scripts/generate-command-skills.ts",
+    "generate:check": "node --experimental-strip-types scripts/generate-command-skills.ts --check",
+    "upstream:check": "node --experimental-strip-types scripts/check-upstream.ts",
+    "upstream:update": "node --experimental-strip-types scripts/sync-upstream.ts",
+    "test:node": "node --experimental-strip-types --test --test-concurrency=1 tests/*.test.ts",
     "test:upstream-hook": "cd upstream/agent-skills && bash hooks/simplify-ignore-test.sh",
     "test": "npm run test:node && npm run test:upstream-hook",
-    "lint": "for file in scripts/*.mjs tests/*.mjs; do node --check \"$file\"; done",
+    "lint": "for file in pi-extension/*.ts scripts/*.ts tests/*.ts; do node --experimental-strip-types --check \"$file\" || exit; done",
     "typecheck": "tsc --noEmit",
     "check": "npm run lint && npm run typecheck && npm test && npm run generate:check && npm run upstream:check"
   },

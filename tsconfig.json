@@ -9,5 +9,5 @@
     "target": "ES2022",
     "types": ["node"]
   },
-  "include": ["pi-extension/**/*.ts"]
+  "include": ["pi-extension/**/*.ts", "scripts/**/*.ts", "tests/**/*.ts"]
 }

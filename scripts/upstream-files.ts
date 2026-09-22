@@ -2,7 +2,7 @@ import { createHash } from "node:crypto";
 import { readFile, readdir, readlink, stat } from "node:fs/promises";
 import { join, relative } from "node:path";
 
-export async function inspectUpstream(snapshotDir) {
+export async function inspectUpstream(snapshotDir: string) {
   const commandDir = join(snapshotDir, ".claude", "commands");
   const hookDir = join(snapshotDir, "hooks");
   const commands = (await readdir(commandDir, { withFileTypes: true }))
@@ -17,9 +17,9 @@ export async function inspectUpstream(snapshotDir) {
   return { commands, hooks, version: plugin.version };
 }
 
-export async function snapshotDigest(snapshotDir) {
-  const items = [];
-  async function walk(directory) {
+export async function snapshotDigest(snapshotDir: string) {
+  const items: { path: string; link: boolean }[] = [];
+  async function walk(directory: string): Promise<void> {
     for (const entry of await readdir(directory, { withFileTypes: true })) {
       if (entry.name === ".git") continue;
       const path = join(directory, entry.name);
@@ -42,7 +42,7 @@ export async function snapshotDigest(snapshotDir) {
   return digest.digest("hex");
 }
 
-export function diffNames(before = [], after = []) {
+export function diffNames(before: string[] = [], after: string[] = []) {
   return {
     added: after.filter((name) => !before.includes(name)),
     removed: before.filter((name) => !after.includes(name)),

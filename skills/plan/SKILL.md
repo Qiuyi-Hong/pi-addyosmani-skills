@@ -2,7 +2,7 @@
 name: plan
 description: Break work into small verifiable tasks with acceptance criteria and dependency ordering
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/plan.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/plan.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).
 

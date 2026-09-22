@@ -2,7 +2,7 @@
 name: ship
 description: Run the pre-launch checklist via parallel fan-out to specialist personas, then synthesize a go/no-go decision
 ---
-<!-- Generated from upstream/agent-skills/.claude/commands/ship.md by scripts/generate-command-skills.mjs; do not edit. -->
+<!-- Generated from upstream/agent-skills/.claude/commands/ship.md by scripts/generate-command-skills.ts; do not edit. -->
 
 > **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). Claude's Agent tool means Pi's configured subagent/delegation facility; use the source fallback when none is available.
 
