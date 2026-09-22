@@ -1,6 +1,6 @@
 {
   "name": "pi-addyosmani-skills",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Pi adapter for Addy Osmani's agent-skills",
   "type": "module",
   "license": "MIT",
