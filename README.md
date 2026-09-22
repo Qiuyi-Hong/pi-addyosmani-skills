@@ -20,13 +20,13 @@ upstream.lock.json          # upstream version, commit, commands, and hooks
 ## Install
 
 ```bash
-pi install git:github.com/Qiuyi-Hong/pi-addyosmani-skills
+pi install npm:pi-addyosmani-skills
 ```
 
-Pin a release or commit:
+Pin a published version:
 
 ```bash
-pi install git:github.com/Qiuyi-Hong/pi-addyosmani-skills@<tag-or-commit>
+pi install npm:pi-addyosmani-skills@<version>
 ```
 
 For local development:
