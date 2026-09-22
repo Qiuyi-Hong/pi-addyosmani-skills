@@ -19,6 +19,10 @@ upstream.lock.json          # upstream version, commit, commands, and hooks
 
 ## Install
 
+```bash
+pi install git:github.com/Qiuyi-Hong/pi-addyosmani-skills
+```
+
 Pin a release or commit:
 
 ```bash
