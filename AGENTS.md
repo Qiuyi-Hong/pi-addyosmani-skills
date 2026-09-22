@@ -17,3 +17,17 @@ This repository is a Pi adapter around a pinned, vendored snapshot of Addy Osman
 ## Completion
 
 Run `npm run check`. Work is complete when linting, type checking, tests, generated-output checks, and upstream-integrity checks all pass.
+
+## Agent skills
+
+### Issue tracker
+
+Issues live in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five default triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context layout. See `docs/agents/domain.md`.
