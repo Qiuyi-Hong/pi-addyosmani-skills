@@ -4,7 +4,7 @@ description: Simplify code for clarity and maintainability — reduce complexity
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/code-simplify.md by scripts/generate-command-skills.mjs; do not edit. -->
 
-> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills; `/review`, `/plan`, and `/build` also have aliases. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).
+> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).
 
 Invoke the agent-skills:code-simplification skill.
 

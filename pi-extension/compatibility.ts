@@ -1,9 +1,3 @@
-export const COMMAND_ALIASES = {
-  review: "review",
-  plan: "plan",
-  build: "build",
-} as const;
-
 export type HookClassification =
   | "unnecessary in Pi"
   | "already handled natively"

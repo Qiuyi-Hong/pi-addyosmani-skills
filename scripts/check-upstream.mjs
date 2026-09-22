@@ -2,7 +2,7 @@ import { access, readFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { HOOK_CLASSIFICATIONS, COMMAND_ALIASES } from "../pi-extension/compatibility.ts";
+import { HOOK_CLASSIFICATIONS } from "../pi-extension/compatibility.ts";
 import { checkGeneratedSkills } from "./generate-command-skills.mjs";
 import { inspectUpstream, snapshotDigest } from "./upstream-files.mjs";
 
@@ -29,10 +29,6 @@ for (const hook of actual.hooks) {
 for (const hook of Object.keys(HOOK_CLASSIFICATIONS)) {
   if (!actual.hooks.includes(hook)) errors.push(`classification remains for removed hook: ${hook}`);
 }
-for (const skill of Object.values(COMMAND_ALIASES)) {
-  if (!actual.commands.includes(skill)) errors.push(`alias targets missing command skill: ${skill}`);
-}
-
 const simplifyIgnore = await readFile(join(snapshot, "hooks", "simplify-ignore.sh"), "utf8");
 for (const contract of [".tool_name", ".tool_input.file_path", '[ -z "$TOOL_NAME" ]']) {
   if (!simplifyIgnore.includes(contract)) errors.push(`simplify-ignore input contract changed: missing ${contract}`);

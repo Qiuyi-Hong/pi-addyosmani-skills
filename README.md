@@ -1,6 +1,6 @@
 # Pi adapter for Addy Osmani's agent-skills
 
-Unofficial, pinned Pi package for [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). It exposes upstream Agent Skills directly, generates Pi skills from Claude commands, and keeps the runtime adapter limited to aliases plus one hook bridge.
+Unofficial, pinned Pi package for [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). It exposes upstream Agent Skills directly, generates Pi skills from Claude commands, and keeps the runtime adapter limited to one hook bridge.
 
 Verified against Pi `0.87.0` and the current official documentation for [extensions](https://pi.dev/docs/latest/extensions), [skills](https://pi.dev/docs/latest/skills), and [packages](https://pi.dev/docs/latest/packages).
 
@@ -8,7 +8,7 @@ Verified against Pi `0.87.0` and the current official documentation for [extensi
 
 ```text
 upstream/agent-skills/      # exact vendored snapshot; never edit manually
-pi-extension/               # aliases + simplify-ignore lifecycle adapter
+pi-extension/               # simplify-ignore lifecycle adapter
 skills/                     # generated from upstream .claude/commands/*.md
 scripts/                    # sync, generation, and compatibility checks
 tests/
@@ -53,14 +53,6 @@ Generated command workflows are also skills:
 /skill:review
 /skill:plan
 /skill:build auto
-```
-
-The extension preserves these convenience aliases:
-
-```text
-/review → /skill:review
-/plan   → /skill:plan
-/build  → /skill:build
 ```
 
 ## Hooks

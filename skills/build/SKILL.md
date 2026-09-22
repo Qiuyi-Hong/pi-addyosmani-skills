@@ -4,7 +4,7 @@ description: Implement tasks incrementally — build, test, verify, commit. Add 
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/build.md by scripts/generate-command-skills.mjs; do not edit. -->
 
-> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills; `/review`, `/plan`, and `/build` also have aliases. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). `$ARGUMENTS` refers to arguments appended by Pi in the final `User:` line.
+> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). `$ARGUMENTS` refers to arguments appended by Pi in the final `User:` line.
 
 Invoke the agent-skills:incremental-implementation skill alongside agent-skills:test-driven-development.
 

@@ -12,7 +12,7 @@ function splitCommand(source) {
 }
 
 function compatibilityNote(body) {
-  const notes = ["Upstream `/command` references map to generated `/skill:command` skills; `/review`, `/plan`, and `/build` also have aliases."];
+  const notes = ["Upstream `/command` references map to generated `/skill:command` skills."];
   if (body.includes("agent-skills:")) notes.push("`agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`).");
   if (body.includes("$ARGUMENTS")) notes.push("`$ARGUMENTS` refers to arguments appended by Pi in the final `User:` line.");
   if (body.includes("Agent tool")) notes.push("Claude's Agent tool means Pi's configured subagent/delegation facility; use the source fallback when none is available.");

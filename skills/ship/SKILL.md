@@ -4,7 +4,7 @@ description: Run the pre-launch checklist via parallel fan-out to specialist per
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/ship.md by scripts/generate-command-skills.mjs; do not edit. -->
 
-> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills; `/review`, `/plan`, and `/build` also have aliases. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). Claude's Agent tool means Pi's configured subagent/delegation facility; use the source fallback when none is available.
+> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). Claude's Agent tool means Pi's configured subagent/delegation facility; use the source fallback when none is available.
 
 Invoke the agent-skills:shipping-and-launch skill.
 
