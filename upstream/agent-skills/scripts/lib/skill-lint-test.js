@@ -5,9 +5,28 @@
 const assert = require('node:assert/strict');
 const { test } = require('node:test');
 
-const { lintSkillContent } = require('./skill-lint.js');
+const fs   = require('node:fs');
+const os   = require('node:os');
+const path = require('node:path');
+
+const { lintSkillContent, lintSkillLayout } = require('./skill-lint.js');
 
 const KNOWN = new Set(['alpha', 'beta']);
+
+/**
+ * Build a throwaway skill directory. `dirs` are created empty; `files` maps a
+ * path within the skill to its contents, creating parents as needed.
+ */
+function makeSkillDir({ dirs = [], files = {} } = {}) {
+  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'skill-layout-'));
+  for (const d of dirs) fs.mkdirSync(path.join(root, d), { recursive: true });
+  for (const [rel, body] of Object.entries(files)) {
+    const abs = path.join(root, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, body);
+  }
+  return root;
+}
 
 /** A SKILL.md body carrying every required section, so tests can isolate frontmatter. */
 function withAllSections(frontmatter) {
@@ -94,6 +113,20 @@ test('a fully valid skill produces no errors', () => {
 test('reports a description with no trigger clause', () => {
   const content = withAllSections(
     ['---', 'name: alpha', 'description: Designs alpha things and nothing more.', '---'].join('\n')
+  );
+  const { errors } = lintSkillContent('alpha', content, KNOWN);
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /no 'when to use' trigger/);
+});
+
+test('a description whose only triggers are negated is rejected regardless of how many there are', () => {
+  const content = withAllSections(
+    [
+      '---',
+      'name: alpha',
+      'description: Designs alphas. Do not use when building betas. Never use when the input is JSON.',
+      '---',
+    ].join('\n')
   );
   const { errors } = lintSkillContent('alpha', content, KNOWN);
   assert.equal(errors.length, 1);
@@ -248,4 +281,171 @@ test('CRLF line endings are handled', () => {
   const content = skillWithOverview('```\n## Overview\n```').replace(/\n/g, '\r\n');
   const result = lintSkillContent('fenced', content, FENCE_KNOWN);
   assert.equal(overviewMissing(result), true);
+});
+
+// ── Frontmatter must be valid YAML, not merely splittable ────────────────────
+// `parseFrontmatter` splits each line on its first colon, which is forgiving by
+// design. The hosts that read these skills are not: Cursor parses the
+// frontmatter as YAML when a skill is attached to a message, and a parse
+// failure fails the whole request and takes the chat's context with it (#494).
+// Each shape below was confirmed rejected by a strict parser (ruby psych) while
+// passing every other check in this linter.
+
+/** Frontmatter that is otherwise complete, so only YAML validity varies. */
+function fmLines(...lines) {
+  return withAllSections(['---', 'name: alpha', ...lines, '---'].join('\n'));
+}
+
+const yamlErrors = result => result.errors.filter(e => e.startsWith('Frontmatter line '));
+
+test('a valid frontmatter reports no YAML error', () => {
+  const result = lintSkillContent('alpha', fmLines('description: Use when you need alpha'), KNOWN);
+  assert.deepEqual(yamlErrors(result), []);
+});
+
+test('an unquoted value containing a colon is rejected', () => {
+  // YAML reads `Use when: X` as a nested mapping and errors; the split-on-first
+  // -colon parser reads it as a plain string and never notices.
+  const result = lintSkillContent(
+    'alpha',
+    fmLines('description: Use when you need alpha: auth, secrets and review'),
+    KNOWN,
+  );
+  assert.equal(yamlErrors(result).length, 1);
+  assert.match(yamlErrors(result)[0], /unquoted value containing/);
+});
+
+test('quoting the same value makes it valid again', () => {
+  const result = lintSkillContent(
+    'alpha',
+    fmLines('description: "Use when you need alpha: auth, secrets and review"'),
+    KNOWN,
+  );
+  assert.deepEqual(yamlErrors(result), []);
+});
+
+test('a colon with no trailing space is left alone', () => {
+  // `https://example.com` is a perfectly good YAML scalar. The rule keys on
+  // colon-space, not on colons, so ordinary URLs do not trip it.
+  const result = lintSkillContent(
+    'alpha',
+    fmLines('description: Use when you need alpha', 'docs: https://example.com/a:b'),
+    KNOWN,
+  );
+  assert.deepEqual(yamlErrors(result), []);
+});
+
+test('a tab used for indentation is rejected', () => {
+  const result = lintSkillContent(
+    'alpha',
+    fmLines('description: Use when you need alpha', 'meta:', '\tlevel: core'),
+    KNOWN,
+  );
+  assert.equal(yamlErrors(result).length, 1);
+  assert.match(yamlErrors(result)[0], /indents with a tab/);
+});
+
+test('an unterminated quote is rejected', () => {
+  const result = lintSkillContent('alpha', fmLines('description: "Use when you need alpha'), KNOWN);
+  assert.equal(yamlErrors(result).length, 1);
+  assert.match(yamlErrors(result)[0], /never closes/);
+});
+
+test('a duplicate key is not reported, because YAML accepts it', () => {
+  // Deliberate boundary: `safe_load` accepts duplicate keys, so flagging them
+  // here would fail files no host rejects. The rule tracks the parser, not taste.
+  const result = lintSkillContent(
+    'alpha',
+    fmLines('description: Use when you need alpha', 'description: Use when you need alpha'),
+    KNOWN,
+  );
+  assert.deepEqual(yamlErrors(result), []);
+});
+
+test('the error names the line so the fix is obvious', () => {
+  const result = lintSkillContent(
+    'alpha',
+    fmLines('description: Use when you need alpha', 'owner: team: platform'),
+    KNOWN,
+  );
+  assert.match(yamlErrors(result)[0], /^Frontmatter line 4 /);
+});
+
+// ─── Context budget ──────────────────────────────────────────────────────────
+
+test('warns when SKILL.md exceeds the 500-line context budget', () => {
+  const padded = withAllSections(VALID_FRONTMATTER) + '\n'.repeat(600);
+
+  const { errors, warnings } = lintSkillContent('alpha', padded, KNOWN);
+
+  assert.equal(errors.length, 0, 'an over-budget skill must not block CI');
+  assert.equal(warnings.length, 1);
+  assert.match(warnings[0], /over the 500-line context budget/);
+});
+
+test('a SKILL.md at exactly the budget is not flagged', () => {
+  const base = withAllSections(VALID_FRONTMATTER);
+  const baseLines = (base.match(/\n/g) || []).length;
+  const atBudget = base + '\n'.repeat(500 - baseLines);
+
+  assert.equal((atBudget.match(/\n/g) || []).length, 500, 'fixture must sit exactly on the boundary');
+  const { warnings } = lintSkillContent('alpha', atBudget, KNOWN);
+
+  assert.equal(warnings.length, 0);
+});
+
+// ─── Layout ──────────────────────────────────────────────────────────────────
+
+test('reports an empty scripts/ directory', () => {
+  const dir = makeSkillDir({ dirs: ['scripts'] });
+
+  const errors = lintSkillLayout(dir);
+
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /Empty directory `scripts\/`/);
+});
+
+test('reports a directory that only nests more empty directories', () => {
+  const dir = makeSkillDir({ dirs: ['references', 'references/deep'] });
+
+  const errors = lintSkillLayout(dir);
+
+  assert.equal(errors.length, 1, 'the outermost empty directory is named once, not every level');
+  assert.match(errors[0], /Empty directory `references\/`/);
+});
+
+test('a directory holding a file is not empty', () => {
+  const dir = makeSkillDir({ files: { 'scripts/helper.sh': '#!/bin/bash\nset -e\n' } });
+
+  assert.deepEqual(lintSkillLayout(dir), []);
+});
+
+test('reports a supporting .md file that is not lowercase-hyphen-separated', () => {
+  const dir = makeSkillDir({ files: { 'Refinement_Criteria.md': 'x\n' } });
+
+  const errors = lintSkillLayout(dir);
+
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /Supporting file `Refinement_Criteria\.md` is not lowercase-hyphen-separated/);
+});
+
+test('names a badly named supporting file by its path within the skill', () => {
+  const dir = makeSkillDir({ files: { 'references/Floor_Guard.md': 'x\n' } });
+
+  const errors = lintSkillLayout(dir);
+
+  assert.equal(errors.length, 1);
+  assert.match(errors[0], /`references\/Floor_Guard\.md`/);
+});
+
+test('SKILL.md is exempt from the supporting-file naming rule', () => {
+  const dir = makeSkillDir({ files: { 'SKILL.md': 'x\n', 'examples.md': 'x\n' } });
+
+  assert.deepEqual(lintSkillLayout(dir), []);
+});
+
+test('non-markdown files are left to the Script Requirements conventions', () => {
+  const dir = makeSkillDir({ files: { 'scripts/Idea_Refine.sh': '#!/bin/bash\nset -e\n' } });
+
+  assert.deepEqual(lintSkillLayout(dir), []);
 });

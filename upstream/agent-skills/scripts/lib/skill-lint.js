@@ -15,9 +15,12 @@
  *   - description does not exceed 1024 characters
  *   - description includes a 'when to use' trigger (skill-anatomy.md: Required)
  *   - required sections are present
+ *   - a skill's subdirectories are non-empty (skill-anatomy.md: Supporting Files)
+ *   - supporting .md filenames are lowercase-hyphen-separated
  *
  * Checks (warnings, do not block CI):
  *   - cross-skill references point to known skills
+ *   - SKILL.md stays under the 500-line context budget
  */
 
 const fs   = require('fs');
@@ -26,6 +29,12 @@ const path = require('path');
 // ─── Config ──────────────────────────────────────────────────────────────────
 
 const MAX_DESCRIPTION_LENGTH = 1024;
+
+// SKILL.md loads in full the moment an agent activates the skill, so its length
+// is paid for on every activation (docs/skill-anatomy.md -> Context Efficiency).
+// A warning, not an error: trimming a skill is an editorial call, and failing
+// CI on line count would block unrelated work on an over-budget skill.
+const MAX_SKILL_LINES = 500;
 
 // A skill directory name must be lowercase-hyphen-separated
 // (docs/skill-anatomy.md → Naming Conventions).
@@ -38,6 +47,12 @@ const KEBAB_CASE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 // describe exclusions, not trigger conditions.
 const DESCRIPTION_TRIGGER        = /\buse (this )?when\b|\buse (before|after|during)\b/i;
 const DESCRIPTION_TRIGGER_NEGATE = /\b(do not|don't|never) use (this )?(when|before|after|during)\b/i;
+// Same pattern, global — used to strip *every* negated clause before checking
+// whether a positive trigger remains. Without /g only the first is removed, so
+// a description carrying two or more negated clauses and no positive one would
+// still match DESCRIPTION_TRIGGER on the leftovers and pass. Kept separate from
+// the non-global form above because a /g regex carries lastIndex across .test().
+const DESCRIPTION_TRIGGER_NEGATE_ALL = new RegExp(DESCRIPTION_TRIGGER_NEGATE.source, 'gi');
 
 // Sections every standard SKILL.md must contain.
 // Each entry is an array of acceptable heading strings — the first
@@ -147,6 +162,85 @@ function parseFrontmatter(content) {
 }
 
 /**
+ * Report frontmatter that this file's own parser accepts but a real YAML
+ * parser rejects.
+ *
+ * `parseFrontmatter` above splits each line on its first colon. That is enough
+ * to read `name` and `description`, and it is deliberately forgiving — but it
+ * means a SKILL.md whose frontmatter is not valid YAML passes every check here.
+ * The hosts that consume these skills do not share that forgiveness: Cursor
+ * parses the frontmatter as YAML when a skill is attached to a message, and a
+ * parse failure there fails the whole request with a generic server error and
+ * takes the rest of the chat's context with it (#494).
+ *
+ * So the repo could ship frontmatter that breaks a host while CI stayed green.
+ * That was verified once by hand, against all 25 skills, in the #494 thread;
+ * this makes it a check instead of a memory.
+ *
+ * Scope is deliberately narrow — the three shapes a strict parser rejects and
+ * the split-on-first-colon parser does not, confirmed against ruby's psych:
+ *
+ *   description: Use this: when X    unquoted value with a colon-space: YAML
+ *                                    reads a nested mapping and errors
+ *   \tkey: value                      tab indentation: invalid YAML whitespace
+ *   description: "unterminated       an unclosed quote
+ *
+ * It is not a YAML implementation. This repo has no package.json and therefore
+ * no parser to depend on, so the check stays a small set of rules aimed at the
+ * classes actually observed to break a host. No current frontmatter uses block
+ * scalars or multi-line values, and the check assumes that stays true; add a
+ * rule here rather than loosening one if it changes.
+ */
+function frontmatterYamlErrors(content) {
+  const match = content.match(/^---[ \t]*\r?\n([\s\S]*?)\r?\n---[ \t]*\r?\n/);
+  if (!match) return [];
+
+  const errors = [];
+  const lines = match[1].split(/\r?\n/);
+  lines.forEach((line, i) => {
+    const lineNo = i + 2; // the opening `---` is line 1
+    if (!line.trim()) return;
+
+    if (/^[ ]*\t/.test(line)) {
+      errors.push(
+        `Frontmatter line ${lineNo} indents with a tab — YAML forbids tabs in indentation, ` +
+        `so a host that parses this frontmatter rejects the whole file`
+      );
+      return;
+    }
+
+    const colonIdx = line.indexOf(':');
+    if (colonIdx === -1) return;
+    const value = line.slice(colonIdx + 1).trim();
+    if (!value) return;
+
+    const quote = value[0] === '"' || value[0] === "'" ? value[0] : null;
+    if (quote) {
+      // An opening quote must close. `endsWith` is enough here because a
+      // trailing comment after a quoted scalar does not appear in this repo.
+      if (value.length < 2 || !value.endsWith(quote)) {
+        errors.push(
+          `Frontmatter line ${lineNo} opens a ${quote === '"' ? 'double' : 'single'} quote that never closes — ` +
+          `a host parsing this frontmatter as YAML rejects the whole file`
+        );
+      }
+      return;
+    }
+
+    // Unquoted scalar. A colon followed by a space (or ending the line) makes
+    // YAML read a nested mapping where a plain string was meant.
+    if (/:(\s|$)/.test(value)) {
+      errors.push(
+        `Frontmatter line ${lineNo} has an unquoted value containing ': ' — YAML reads that as a ` +
+        `nested mapping and rejects the file; wrap the value in quotes`
+      );
+    }
+  });
+
+  return errors;
+}
+
+/**
  * Collect all explicit skill cross-references from content.
  * Only matches against the SKILL_REF_PATTERNS list to avoid
  * false-positives from inline code snippets.
@@ -183,6 +277,10 @@ function lintSkillContent(dirName, content, knownSkills) {
     return { errors, warnings, exempt };
   }
 
+  // The parser above is forgiving by design; the hosts that read this
+  // frontmatter are not (#494).
+  errors.push(...frontmatterYamlErrors(content));
+
   if (!fm.name) {
     errors.push("Frontmatter missing required field: 'name'");
   } else if (fm.name !== dirName) {
@@ -204,7 +302,7 @@ function lintSkillContent(dirName, content, knownSkills) {
     }
     const hasTrigger       = DESCRIPTION_TRIGGER.test(fm.description);
     const onlyNegated      = hasTrigger && DESCRIPTION_TRIGGER_NEGATE.test(fm.description)
-      && !fm.description.replace(DESCRIPTION_TRIGGER_NEGATE, '').match(DESCRIPTION_TRIGGER);
+      && !fm.description.replace(DESCRIPTION_TRIGGER_NEGATE_ALL, '').match(DESCRIPTION_TRIGGER);
     if (!hasTrigger || onlyNegated) {
       errors.push(
         `Description has no 'when to use' trigger — add a "Use when …" clause ` +
@@ -271,6 +369,17 @@ function lintSkillContent(dirName, content, knownSkills) {
     }
   }
 
+  // ── Context budget ───────────────────────────────────────────────────────
+  // Counted as newlines so the number matches what `wc -l` reports, which is
+  // how a contributor would check this by hand.
+  const lineCount = (content.match(/\n/g) || []).length;
+  if (lineCount > MAX_SKILL_LINES) {
+    warnings.push(
+      `SKILL.md is ${lineCount} lines, over the ${MAX_SKILL_LINES}-line context budget ` +
+      `(skill-anatomy.md: Context Efficiency) — move detail into a supporting file`,
+    );
+  }
+
   // ── Cross-skill references ───────────────────────────────────────────────
   const refs = extractSkillReferences(content);
   for (const ref of refs) {
@@ -282,13 +391,73 @@ function lintSkillContent(dirName, content, knownSkills) {
   return { errors, warnings, exempt };
 }
 
+/** True when dir contains no regular file at any depth. */
+function isEffectivelyEmpty(dir) {
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (entry.isDirectory()) {
+      if (!isEffectivelyEmpty(path.join(dir, entry.name))) return false;
+    } else {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Lint the files that travel with a skill, as opposed to the contents of
+ * SKILL.md. These rules need the filesystem, so they live here rather than in
+ * the pure content linter. Returns an array of error strings.
+ *
+ * Enforced (docs/skill-anatomy.md):
+ *   - Supporting Files: "do not create an empty `scripts/` directory just to
+ *     mirror other skills". Generalized to any subdirectory — an empty
+ *     `references/` is noise for the same reason.
+ *   - Naming Conventions: "Supporting files: lowercase-hyphen-separated.md".
+ *     Scoped to .md, which is what that line covers; `scripts/` helpers carry
+ *     their own conventions under Script Requirements.
+ */
+function lintSkillLayout(skillDir) {
+  const errors = [];
+
+  const walk = (dir, relBase) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const rel = relBase ? `${relBase}/${entry.name}` : entry.name;
+      const abs = path.join(dir, entry.name);
+
+      if (entry.isDirectory()) {
+        if (isEffectivelyEmpty(abs)) {
+          errors.push(
+            `Empty directory \`${rel}/\` — remove it rather than mirroring another skill's layout ` +
+            `(skill-anatomy.md: Supporting Files)`,
+          );
+        } else {
+          walk(abs, rel);
+        }
+        continue;
+      }
+
+      if (rel === 'SKILL.md' || !entry.name.endsWith('.md')) continue;
+      if (!KEBAB_CASE.test(entry.name.slice(0, -'.md'.length))) {
+        errors.push(
+          `Supporting file \`${rel}\` is not lowercase-hyphen-separated ` +
+          `(skill-anatomy.md: Naming Conventions)`,
+        );
+      }
+    }
+  };
+
+  walk(skillDir, '');
+  return errors;
+}
+
 /**
  * Lint a skill by directory name: reads its SKILL.md, then delegates to
  * lintSkillContent. This is the thin filesystem wrapper the CLI uses.
  * Returns { errors, warnings, exempt }.
  */
 function lintSkill(dirName, skillsDir, knownSkills) {
-  const skillPath = path.join(skillsDir, dirName, 'SKILL.md');
+  const skillDir  = path.join(skillsDir, dirName);
+  const skillPath = path.join(skillDir, 'SKILL.md');
 
   if (!fs.existsSync(skillPath)) {
     return { errors: ['Missing SKILL.md'], warnings: [], exempt: false };
@@ -301,7 +470,9 @@ function lintSkill(dirName, skillsDir, knownSkills) {
     return { errors: [`Unreadable SKILL.md: ${err.message}`], warnings: [], exempt: false };
   }
 
-  return lintSkillContent(dirName, content, knownSkills);
+  const result = lintSkillContent(dirName, content, knownSkills);
+  result.errors.push(...lintSkillLayout(skillDir));
+  return result;
 }
 
 // Export only functions. The policy collections (REQUIRED_SECTIONS,
@@ -311,7 +482,9 @@ function lintSkill(dirName, skillsDir, knownSkills) {
 module.exports = {
   stripFencedCodeBlocks,
   parseFrontmatter,
+  frontmatterYamlErrors,
   extractSkillReferences,
   lintSkillContent,
+  lintSkillLayout,
   lintSkill,
 };

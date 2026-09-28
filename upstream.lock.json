@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "repository": "https://github.com/addyosmani/agent-skills.git",
   "ref": "main",
-  "commit": "dc27a9c2e13721158157632de61b4106c6c2a2a1",
-  "version": "0.6.10",
-  "snapshotSha256": "35ee32676ed9f8737d70d4a556a5d7de4026eff943e20e2a83d3260ce14e60db",
+  "commit": "2686b620fc1fed2e8f60c704839c766b8594c6b6",
+  "version": "0.6.11",
+  "snapshotSha256": "12c796503130e3497cf4a4843f4d6b06418f826b2038eb0669d19113597a6c34",
   "commands": [
     "build",
     "code-simplify",
