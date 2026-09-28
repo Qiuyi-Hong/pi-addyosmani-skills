@@ -1,0 +1,47 @@
+name: Sync upstream
+
+on:
+  schedule:
+    - cron: '0 9 * * *'
+      timezone: Europe/London
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.19.0
+          cache: npm
+      - run: npm ci
+      - run: npm run upstream:update
+      - run: npm run check
+      - name: Open or update upstream sync PR
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git add -A -- upstream/agent-skills/ skills/ upstream.lock.json
+          if git diff --cached --quiet; then
+            echo "Already in sync"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git switch -c automation/upstream-sync
+          git commit -m 'chore: sync upstream agent-skills'
+          gh auth setup-git
+          git push --force-with-lease origin HEAD:refs/heads/automation/upstream-sync
+          if [ -z "$(gh pr list --head automation/upstream-sync --state open --json number --jq '.[0].number')" ]; then
+            gh pr create --base main --head automation/upstream-sync \
+              --title 'chore: sync upstream agent-skills' \
+              --body 'Automated upstream snapshot, lockfile, and generated skill update. Review before merging.'
+          fi

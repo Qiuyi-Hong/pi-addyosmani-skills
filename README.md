@@ -83,6 +83,8 @@ npm run upstream:update -- --ref <tag-or-commit>
 
 The update command fetches the requested ref, replaces the vendored snapshot, records the exact commit and upstream version, reports added/removed commands and hooks, regenerates command skills, and runs compatibility checks. Runtime code never follows upstream `main` dynamically.
 
+`.github/workflows/sync-upstream.yml` runs daily at 09:00 Europe/London (including BST), runs `npm run check`, and opens or updates a PR only when the snapshot changes. It can also be run manually. Enable **Settings → Actions → General → Workflow permissions → Allow GitHub Actions to create and approve pull requests** for the PR step to work. The pinned snapshot can lag upstream until the PR is merged (or when a sync fails or a scheduled run is delayed).
+
 Expected maintenance behavior:
 
 - normal upstream skill changes require no adapter change;
