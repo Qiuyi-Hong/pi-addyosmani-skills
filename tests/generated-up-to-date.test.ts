@@ -5,6 +5,6 @@ import { checkGeneratedSkills } from "../scripts/generate-command-skills.ts";
 
 const root = new URL("..", import.meta.url).pathname;
 
-test("generated command skills are up to date", async () => {
+test("generated Pi skills and supporting files are up to date", async () => {
   assert.deepEqual(await checkGeneratedSkills(root), []);
 });

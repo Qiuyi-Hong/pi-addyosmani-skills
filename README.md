@@ -1,6 +1,6 @@
 # Pi adapter for Addy Osmani's agent-skills
 
-Unofficial, pinned Pi package for [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). It exposes upstream Agent Skills directly, generates Pi skills from Claude commands, and keeps the runtime adapter limited to one hook bridge.
+Unofficial, pinned Pi package for [addyosmani/agent-skills](https://github.com/addyosmani/agent-skills). It generates Pi-adapted copies of upstream skills, supporting files, and command workflows. The optional runtime hook bridge is disabled by default, matching upstream.
 
 Verified against Pi `0.87.0` and the current official documentation for [extensions](https://pi.dev/docs/latest/extensions), [skills](https://pi.dev/docs/latest/skills), and [packages](https://pi.dev/docs/latest/packages).
 
@@ -8,14 +8,17 @@ Verified against Pi `0.87.0` and the current official documentation for [extensi
 
 ```text
 upstream/agent-skills/      # exact vendored snapshot; never edit manually
-pi-extension/               # simplify-ignore lifecycle adapter
-skills/                     # generated from upstream .claude/commands/*.md
+pi-extension/               # optional simplify-ignore lifecycle adapter
+skills/                     # generated command skills
+skills/upstream/            # generated Pi-adapted skills, references, and personas
 scripts/                    # sync, generation, and compatibility checks
 tests/
 upstream.lock.json          # upstream version, commit, commands, and hooks
 ```
 
-`package.json` exposes both `upstream/agent-skills/skills` and generated `skills/` through `pi.skills`. Pi uses progressive skill discovery; this package does not inject skill bodies into the system prompt and does not port the old SessionStart router.
+`package.json` exposes only generated `skills/` through `pi.skills`. Project configuration paths use `.pi/`; user-level paths use `~/.pi/agent/`. The generated support tree preserves upstream's relative reference layout and script permissions. Provenance comments retain the actual upstream source paths.
+
+Pi uses progressive skill discovery; this package does not inject skill bodies into the system prompt and does not port the old SessionStart router. The vendored snapshot stays unchanged.
 
 ## Install
 
@@ -57,9 +60,23 @@ Generated command workflows are also skills:
 
 ## Hooks
 
-Only `simplify-ignore.sh` has a Pi adapter. The upstream script is executed unchanged with translated payloads for `tool_call`, `tool_result`, `agent_before_settle`, and `session_shutdown`.
+No upstream hook is enabled automatically. Skills, including `code-simplify`, work without hooks.
 
-See [docs/hook-compatibility.md](docs/hook-compatibility.md) for the complete classification and mapping. The adapter requires Bash, `jq`, and `shasum` or `sha1sum`.
+Only `simplify-ignore.sh` has a Pi adapter. To opt in from this checkout:
+
+```bash
+pi -e ./pi-extension/index.ts
+```
+
+For the default npm installation:
+
+```bash
+pi -e ~/.pi/agent/npm/node_modules/pi-addyosmani-skills/pi-extension/index.ts
+```
+
+The adapter translates lifecycle events and changes cache paths in memory to `.pi/.simplify-ignore-cache/`, without editing upstream files. It requires Bash, `jq`, and `shasum` or `sha1sum` only when explicitly loaded.
+
+See [docs/hook-compatibility.md](docs/hook-compatibility.md) for persistent opt-in through `.pi/settings.json`, all hook classifications, and recovery instructions. Finish active hook-enabled sessions before switching; existing cache backups are not migrated or deleted automatically.
 
 ## Test
 
@@ -88,15 +105,15 @@ The update command fetches the requested ref, replaces the vendored snapshot, re
 Expected maintenance behavior:
 
 - normal upstream skill changes require no adapter change;
-- command changes regenerate `skills/<command>/SKILL.md`;
+- skill, supporting-file, and command changes regenerate the Pi-facing `skills/` tree;
 - added/removed commands and hooks are checked against the lock and hook classification;
-- `simplify-ignore.sh` updates are reused from the new snapshot;
+- `simplify-ignore.sh` updates are read from the new snapshot with Pi paths adapted in memory;
 - Pi API changes stay mostly inside `pi-extension/`.
 
 ## Limitations
 
 - `sdd-cache-pre.sh` and `sdd-cache-post.sh` are unsupported because Pi has no canonical `WebFetch` tool or portable cached-success substitution contract.
-- Generated command skills preserve upstream workflow text. A generated compatibility note explains Pi skill names, command arguments, and Claude Agent-tool references where present.
+- Generated content translates configuration paths, but does not implement Claude-only settings, plugin persona auto-discovery, or Agent Teams. Compatibility notes distinguish those upstream examples from supported Pi behavior. Use your configured delegation facility or the bundled persona prompts.
 - `simplify-ignore` retains upstream's documented crash-recovery and file-rename limitations.
 
 ## Licensing

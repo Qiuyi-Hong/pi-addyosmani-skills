@@ -1,14 +1,17 @@
 import { spawnSync } from "node:child_process";
+import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
-import { toSimplifyIgnorePayload, type SimplifyIgnorePayload } from "./compatibility.ts";
+import { adaptClaudePaths, toSimplifyIgnorePayload, type SimplifyIgnorePayload } from "./compatibility.ts";
 
-const simplifyIgnoreScript = fileURLToPath(new URL("../upstream/agent-skills/hooks/simplify-ignore.sh", import.meta.url));
+const simplifyIgnoreScriptPath = fileURLToPath(new URL("../upstream/agent-skills/hooks/simplify-ignore.sh", import.meta.url));
+// Adapt paths in memory; never modify the pinned upstream script.
+const simplifyIgnoreScript = adaptClaudePaths(readFileSync(simplifyIgnoreScriptPath, "utf8"));
 
 function runSimplifyIgnore(payload: SimplifyIgnorePayload, cwd: string): void {
-  const result = spawnSync("bash", [simplifyIgnoreScript], {
+  const result = spawnSync("bash", ["-c", simplifyIgnoreScript, simplifyIgnoreScriptPath], {
     cwd,
     encoding: "utf8",
     env: { ...process.env, CLAUDE_PROJECT_DIR: cwd },

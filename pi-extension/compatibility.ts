@@ -1,3 +1,7 @@
+export function adaptClaudePaths(source: string): string {
+  return source.replaceAll("~/.claude/", "~/.pi/agent/").replaceAll(".claude/", ".pi/");
+}
+
 export type HookClassification =
   | "unnecessary in Pi"
   | "already handled natively"
@@ -11,7 +15,7 @@ export const HOOK_CLASSIFICATIONS = {
   },
   "simplify-ignore.sh": {
     classification: "needs a Pi adapter",
-    reason: "The upstream script is reused through Pi tool and session lifecycle events.",
+    reason: "An explicitly loaded Pi extension adapts the upstream script's paths and lifecycle events.",
   },
   "sdd-cache-pre.sh": {
     classification: "cannot be reproduced",

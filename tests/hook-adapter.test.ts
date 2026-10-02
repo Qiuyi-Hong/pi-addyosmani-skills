@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { access, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -50,7 +50,7 @@ test("reading this test source does not let the hook rewrite it", { skip: spawnS
   }
 });
 
-test("Pi events drive the unchanged simplify-ignore script", { skip: spawnSync("jq", ["--version"]).status !== 0 }, async () => {
+test("explicit Pi extension uses .pi cache and restores protected code", { skip: spawnSync("jq", ["--version"]).status !== 0 }, async () => {
   const cwd = await mkdtemp(join(tmpdir(), "pi-simplify-ignore-"));
   const path = join(cwd, "example.js");
   type Handler = (event: Parameters<typeof toSimplifyIgnorePayload>[0], ctx: { cwd: string }) => void;
@@ -69,10 +69,18 @@ test("Pi events drive the unchanged simplify-ignore script", { skip: spawnSync("
     assert.ok(toolCall);
     toolCall({ type: "tool_call", toolName: "read", input: { path } }, { cwd });
     assert.match(await readFile(path, "utf8"), /BLOCK_[0-9a-f]{8}/);
+    const cache = join(cwd, ".pi", ".simplify-ignore-cache");
+    assert.ok((await readdir(cache)).some((name) => name.endsWith(".bak")));
+    await assert.rejects(access(join(cwd, ".claude")), { code: "ENOENT" });
 
     const beforeSettle = events.get("agent_before_settle");
     assert.ok(beforeSettle);
     beforeSettle({ type: "agent_before_settle" }, { cwd });
+    assert.match(await readFile(path, "utf8"), /const secret = 42;/);
+    assert.deepEqual(await readdir(cache), []);
+    const shutdown = events.get("session_shutdown");
+    assert.ok(shutdown);
+    shutdown({ type: "session_shutdown" }, { cwd });
     assert.match(await readFile(path, "utf8"), /const secret = 42;/);
   } finally {
     await rm(cwd, { recursive: true, force: true });

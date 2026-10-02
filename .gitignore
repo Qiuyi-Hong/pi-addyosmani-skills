@@ -1,3 +1,5 @@
 node_modules/
 *.tgz
+.pi/.simplify-ignore-cache/
+# Keep legacy backups out of git until restored.
 .claude/.simplify-ignore-cache/

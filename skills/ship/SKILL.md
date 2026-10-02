@@ -4,7 +4,7 @@ description: Run the pre-launch checklist via parallel fan-out to specialist per
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/ship.md by scripts/generate-command-skills.ts; do not edit. -->
 
-> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). Claude's Agent tool means Pi's configured subagent/delegation facility; use the source fallback when none is available.
+> **Pi compatibility:** Upstream `/command` references map to generated `/skill:command` skills. `agent-skills:<name>` refers to the bundled Pi skill `<name>` (`/skill:<name>`). Claude's Agent tool means Pi's configured subagent/delegation facility; use the source fallback when none is available. Configuration uses `.pi/` for projects and `~/.pi/agent/` for users. Claude-only settings, plugin persona auto-discovery, and Agent Teams are not implemented by Pi.
 
 Invoke the agent-skills:shipping-and-launch skill.
 
@@ -25,9 +25,9 @@ In other harnesses without an Agent tool, invoke each persona's system prompt se
 Constraints (from Claude Code's subagent model):
 - Subagents cannot spawn other subagents — do not let one persona delegate to another.
 - Each subagent gets its own context window and returns only its report to this main session.
-- If you need teammates that talk to each other instead of just reporting back, use Claude Code Agent Teams and reference these personas as teammate types (see `references/orchestration-patterns.md`).
+- If you need teammates that talk to each other instead of just reporting back, use Claude Code Agent Teams and reference these personas as teammate types (see `../upstream/references/orchestration-patterns.md`).
 
-**Persona resolution.** If you've defined your own `code-reviewer`, `security-auditor`, or `test-engineer` in `.claude/agents/` or `~/.claude/agents/`, those take precedence over this plugin's versions — `/ship` picks up your customizations automatically. This is intentional: plugin subagents sit at the bottom of Claude Code's scope priority table, so user-level definitions win by design.
+**Persona resolution.** Use personas registered with your Pi delegation facility. Project and user definitions may live in `.pi/agents/` and `~/.pi/agent/agents/` if that facility supports those locations. Otherwise read the bundled prompts in `../upstream/agents/` relative to this skill and pass their instructions to a general-purpose subagent. Pi does not automatically discover this package's personas.
 
 ## Phase B — Merge in main context
 

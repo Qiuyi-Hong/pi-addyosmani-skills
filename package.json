@@ -29,11 +29,8 @@
     "upstream.lock.json"
   ],
   "pi": {
-    "extensions": [
-      "./pi-extension/index.ts"
-    ],
+    "extensions": [],
     "skills": [
-      "./upstream/agent-skills/skills",
       "./skills"
     ]
   },
