@@ -148,6 +148,11 @@ class LegacyTaskService implements OldTaskAPI {
     const task = this.newService.findById(String(id));
     return this.toOldFormat(task);
   }
+
+  // Translate the new shape back into what old consumers expect
+  private toOldFormat(task: Task): OldTask {
+    return { id: Number(task.id), title: task.title, done: task.status === 'done' };
+  }
 }
 ```
 
@@ -160,7 +165,7 @@ function getTaskService(userId: string): TaskService {
   if (featureFlags.isEnabled('new-task-service', { userId })) {
     return new NewTaskService();
   }
-  return new LegacyTaskService();
+  return new OldTaskService();
 }
 ```
 

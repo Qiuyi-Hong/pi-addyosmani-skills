@@ -1,6 +1,7 @@
 ---
 name: plan
 description: Break work into small verifiable tasks with acceptance criteria and dependency ordering
+disable-model-invocation: true
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/plan.md by scripts/generate-command-skills.ts; do not edit. -->
 
