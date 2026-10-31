@@ -1,6 +1,7 @@
 ---
 name: constraints
 description: Define and enforce this project's quality bar — interview, sane defaults, CONSTRAINTS.md
+disable-model-invocation: true
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/constraints.md by scripts/generate-command-skills.ts; do not edit. -->
 

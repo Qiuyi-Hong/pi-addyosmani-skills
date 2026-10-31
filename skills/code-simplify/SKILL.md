@@ -1,6 +1,7 @@
 ---
 name: code-simplify
 description: Simplify code for clarity and maintainability — reduce complexity without changing behavior
+disable-model-invocation: true
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/code-simplify.md by scripts/generate-command-skills.ts; do not edit. -->
 
