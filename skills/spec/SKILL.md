@@ -1,6 +1,7 @@
 ---
 name: spec
 description: Start spec-driven development — write a structured specification before writing code
+disable-model-invocation: true
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/spec.md by scripts/generate-command-skills.ts; do not edit. -->
 
