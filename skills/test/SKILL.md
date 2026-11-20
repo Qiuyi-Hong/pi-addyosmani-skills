@@ -1,6 +1,7 @@
 ---
 name: test
 description: Run TDD workflow — write failing tests, implement, verify. For bugs, use the Prove-It pattern.
+disable-model-invocation: true
 ---
 <!-- Generated from upstream/agent-skills/.claude/commands/test.md by scripts/generate-command-skills.ts; do not edit. -->
 
