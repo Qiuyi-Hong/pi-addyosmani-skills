@@ -104,6 +104,20 @@ test('ignores non-artifact markdown references (no false positives)', () => {
   assert.match(result.stdout, /1 files checked — 0 error\(s\) — PASSED/);
 });
 
+test('does not mistake the tail of an unrelated filename for an artifact path', () => {
+  const root = makeSandbox();
+  writeFile(
+    root,
+    'skills/planning-and-task-breakdown/SKILL.md',
+    'Attach `test-plan.md` and `release_todo.md`. Save the plan to `tasks/plan.md`.\n',
+  );
+
+  const result = run(root);
+
+  assert.equal(result.status, 0, result.stdout + result.stderr);
+  assert.match(result.stdout, /1 files checked — 0 error\(s\) — PASSED/);
+});
+
 test('skips guarded files that do not exist', () => {
   const root = makeSandbox();
   writeFile(root, '.claude/commands/spec.md', 'Save the spec as `SPEC.md`.\n');
@@ -176,4 +190,12 @@ test('guards the Copilot setup doc, whose prompt-file aliases name the artifacts
   assert.equal(result.status, 1, result.stdout + result.stderr);
   assert.match(result.stdout, /docs\/copilot-setup\.md/);
   assert.match(result.stdout, /specs\/\[name\]\/spec\.md/);
+});
+
+test('spec-driven-development saves the capability map and module specs under spec/, not the project root', () => {
+  const skill = fs.readFileSync(path.join(__dirname, '..', 'skills', 'spec-driven-development', 'SKILL.md'), 'utf8');
+
+  assert.match(skill, /spec\/capability-map\.md/);
+  assert.match(skill, /spec\/SPEC-identity\.md/);
+  assert.doesNotMatch(skill, /at the project root and each module/);
 });
